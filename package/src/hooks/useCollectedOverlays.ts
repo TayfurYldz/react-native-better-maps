@@ -19,7 +19,6 @@ import { Marker } from '../components/Marker';
 import { Polygon } from '../components/Polygon';
 import { Polyline } from '../components/Polyline';
 import { collectGeojsonOverlays } from '../overlays/collectGeojsonOverlays';
-import { collectMarkerOverlay } from '../overlays/collectMarkerOverlay';
 import {
   resolveOverlayId,
   tappableFromPress,
@@ -32,6 +31,13 @@ import type {
 } from '../overlays/overlayType';
 import { OverlayType, overlayCallbackKey } from '../overlays/overlayType';
 import { resolveMarkerImage } from '../overlays/resolveMarkerImage';
+import {
+  isValidCoordinate,
+  isValidCoordinateList,
+  isValidRadius,
+} from '../overlays/validateOverlay';
+import { warnOverlay } from '../overlays/warnOverlay';
+import { normalizeEnteringAnimation } from '../utils/enteringAnimation';
 
 export interface CollectedOverlays {
   markers: MarkerDescriptor[];
@@ -72,11 +78,40 @@ const overlayCollectors: OverlayCollector[] = [
     overlayType: OverlayType.Marker,
     component: Marker,
     collect: (child, state) => {
-      collectMarkerOverlay(
-        child.props as MarkerProps,
-        state,
-        resolveMarkerImage,
-      );
+      const props = child.props as MarkerProps;
+      const id = resolveOverlayId(props.id, 'marker', state.markerIndex);
+      state.markerIndex += 1;
+
+      if (!isValidCoordinate(props.coordinate)) {
+        warnOverlay(`marker "${id}" skipped: invalid coordinate`);
+        return;
+      }
+
+      state.markers.push({
+        id,
+        coordinate: props.coordinate,
+        title: props.title,
+        subtitle: props.subtitle,
+        draggable: props.draggable,
+        clusterable: props.clusterable,
+        image: resolveMarkerImage(props.image),
+        anchor: props.anchor,
+        centerOffset: props.centerOffset,
+        rotation: props.rotation,
+        flat: props.flat,
+        opacity: props.opacity,
+        enteringAnimation: normalizeEnteringAnimation(props.enteringAnimation),
+      });
+      state.registry.set(overlayCallbackKey(OverlayType.Marker, id), {
+        onPress: props.onPress,
+        onDragEnd: props.onDragEnd,
+      });
+      if (props.onPress != null) {
+        state.hasMarkerPress = true;
+      }
+      if (props.onDragEnd != null) {
+        state.hasMarkerDragEnd = true;
+      }
     },
   },
   {
@@ -86,6 +121,13 @@ const overlayCollectors: OverlayCollector[] = [
       const props = child.props as PolylineProps;
       const id = resolveOverlayId(props.id, 'polyline', state.polylineIndex);
       state.polylineIndex += 1;
+
+      if (!isValidCoordinateList(props.coordinates, 2)) {
+        warnOverlay(
+          `polyline "${id}" skipped: needs at least 2 valid coordinates`,
+        );
+        return;
+      }
 
       state.polylines.push({
         id,
@@ -110,6 +152,13 @@ const overlayCollectors: OverlayCollector[] = [
       const id = resolveOverlayId(props.id, 'polygon', state.polygonIndex);
       state.polygonIndex += 1;
 
+      if (!isValidCoordinateList(props.coordinates, 3)) {
+        warnOverlay(
+          `polygon "${id}" skipped: needs at least 3 valid coordinates`,
+        );
+        return;
+      }
+
       state.polygons.push({
         id,
         coordinates: props.coordinates,
@@ -133,6 +182,17 @@ const overlayCollectors: OverlayCollector[] = [
       const props = child.props as CircleProps;
       const id = resolveOverlayId(props.id, 'circle', state.circleIndex);
       state.circleIndex += 1;
+
+      if (!isValidCoordinate(props.center)) {
+        warnOverlay(`circle "${id}" skipped: invalid center coordinate`);
+        return;
+      }
+      if (!isValidRadius(props.radius)) {
+        warnOverlay(
+          `circle "${id}" skipped: radius must be finite and non-negative`,
+        );
+        return;
+      }
 
       state.circles.push({
         id,
@@ -159,6 +219,20 @@ const overlayCollectors: OverlayCollector[] = [
     },
   },
 ];
+
+export function collectOverlayChild(
+  child: ReactElement,
+  state: OverlayCollectorState,
+): void {
+  for (const collector of overlayCollectors) {
+    if (!isOverlayChild(child, collector.overlayType, collector.component)) {
+      continue;
+    }
+
+    collector.collect(child, state);
+    return;
+  }
+}
 
 export function useCollectedOverlays(children: ReactNode): CollectedOverlays {
   const callbackRegistry = useRef(new Map<string, OverlayCallbacks>());
@@ -187,16 +261,7 @@ export function useCollectedOverlays(children: ReactNode): CollectedOverlays {
         return;
       }
 
-      for (const collector of overlayCollectors) {
-        if (
-          !isOverlayChild(child, collector.overlayType, collector.component)
-        ) {
-          continue;
-        }
-
-        collector.collect(child, state);
-        break;
-      }
+      collectOverlayChild(child, state);
     });
 
     callbackRegistry.current = state.registry;
