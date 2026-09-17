@@ -23,6 +23,10 @@ describe('overlay validation', () => {
     );
   });
 
+  test('rejects sparse coordinate arrays', () => {
+    expect(isValidCoordinateList(new Array(2), 2)).toBe(false);
+  });
+
   test('requires the requested number of valid coordinates', () => {
     const coordinate = { latitude: 0, longitude: 0 };
     expect(isValidCoordinateList([], 2)).toBe(false);

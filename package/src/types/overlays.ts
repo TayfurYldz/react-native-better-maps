@@ -88,7 +88,7 @@ export interface MarkerProps {
   /** Unique identifier for the marker. */
   id?: string;
 
-  /** Geographic position of the marker. */
+  /** Geographic position of the marker. Invalid coordinates skip the marker with a development warning. */
   coordinate: Coordinate;
 
   /** Title displayed in the callout. */
@@ -144,7 +144,7 @@ export interface PolylineProps {
   /** Unique identifier for the polyline. */
   id?: string;
 
-  /** Ordered list of coordinates forming the polyline. */
+  /** Ordered list of coordinates forming the polyline. Invalid coordinates or fewer than 2 points skip the polyline with a development warning. */
   coordinates: Coordinate[];
 
   /** Stroke color in hex format (e.g. '#FF0000'). */
@@ -167,7 +167,7 @@ export interface PolygonProps {
   /** Unique identifier for the polygon. */
   id?: string;
 
-  /** Ordered list of coordinates forming the polygon boundary. */
+  /** Ordered list of coordinates forming the polygon boundary. Invalid coordinates or fewer than 3 points skip the polygon with a development warning. */
   coordinates: Coordinate[];
 
   /** Fill color in hex format (e.g. '#FF000080'). */
@@ -193,10 +193,10 @@ export interface CircleProps {
   /** Unique identifier for the circle. */
   id?: string;
 
-  /** Center coordinate of the circle. */
+  /** Center coordinate of the circle. An invalid center skips the circle with a development warning. */
   center: Coordinate;
 
-  /** Radius in meters. */
+  /** Radius in meters. A non-finite or negative radius skips the circle with a development warning. */
   radius: number;
 
   /** Fill color in hex format. */

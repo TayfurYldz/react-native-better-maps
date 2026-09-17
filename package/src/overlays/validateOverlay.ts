@@ -16,11 +16,17 @@ export function isValidCoordinateList(
   value: Coordinate[] | undefined,
   minimumLength: number,
 ): boolean {
-  return (
-    value != null &&
-    value.length >= minimumLength &&
-    value.every(isValidCoordinate)
-  );
+  if (!Array.isArray(value) || value.length < minimumLength) {
+    return false;
+  }
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (!isValidCoordinate(value[index])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function isValidRadius(value: number | undefined): boolean {

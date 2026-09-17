@@ -1,14 +1,11 @@
 import { createElement } from 'react';
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { Polygon } from '../../components/Polygon';
 import type { OverlayCollectorState } from '../overlayCollect';
 
-mock.module('../assetSourceResolver', () => ({
-  resolveAssetSource: () => undefined,
-}));
+import { collectOverlayChild } from '../collectOverlayChild';
 
-const { collectOverlayChild } =
-  await import('../../hooks/useCollectedOverlays');
+const dependencies = { resolveMarkerImage: () => undefined };
 
 function createState(): OverlayCollectorState {
   return {
@@ -42,10 +39,12 @@ describe('collectOverlayChild', () => {
     collectOverlayChild(
       createElement(Polygon, { id: 'bad', coordinates: [] }),
       state,
+      dependencies,
     );
     collectOverlayChild(
       createElement(Polygon, { id: 'good', coordinates: validCoordinates }),
       state,
+      dependencies,
     );
 
     expect(state.polygons).toHaveLength(1);
