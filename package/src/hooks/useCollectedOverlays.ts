@@ -19,6 +19,7 @@ import { Marker } from '../components/Marker';
 import { Polygon } from '../components/Polygon';
 import { Polyline } from '../components/Polyline';
 import { collectGeojsonOverlays } from '../overlays/collectGeojsonOverlays';
+import { collectMarkerOverlay } from '../overlays/collectMarkerOverlay';
 import {
   resolveOverlayId,
   tappableFromPress,
@@ -31,7 +32,6 @@ import type {
 } from '../overlays/overlayType';
 import { OverlayType, overlayCallbackKey } from '../overlays/overlayType';
 import { resolveMarkerImage } from '../overlays/resolveMarkerImage';
-import { normalizeEnteringAnimation } from '../utils/enteringAnimation';
 
 export interface CollectedOverlays {
   markers: MarkerDescriptor[];
@@ -72,35 +72,11 @@ const overlayCollectors: OverlayCollector[] = [
     overlayType: OverlayType.Marker,
     component: Marker,
     collect: (child, state) => {
-      const props = child.props as MarkerProps;
-      const id = resolveOverlayId(props.id, 'marker', state.markerIndex);
-      state.markerIndex += 1;
-
-      state.markers.push({
-        id,
-        coordinate: props.coordinate,
-        title: props.title,
-        subtitle: props.subtitle,
-        draggable: props.draggable,
-        clusterable: props.clusterable,
-        image: resolveMarkerImage(props.image),
-        anchor: props.anchor,
-        centerOffset: props.centerOffset,
-        rotation: props.rotation,
-        flat: props.flat,
-        opacity: props.opacity,
-        enteringAnimation: normalizeEnteringAnimation(props.enteringAnimation),
-      });
-      state.registry.set(overlayCallbackKey(OverlayType.Marker, id), {
-        onPress: props.onPress,
-        onDragEnd: props.onDragEnd,
-      });
-      if (props.onPress != null) {
-        state.hasMarkerPress = true;
-      }
-      if (props.onDragEnd != null) {
-        state.hasMarkerDragEnd = true;
-      }
+      collectMarkerOverlay(
+        child.props as MarkerProps,
+        state,
+        resolveMarkerImage,
+      );
     },
   },
   {

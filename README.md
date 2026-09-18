@@ -351,6 +351,8 @@ Additional props:
 | `rotation`     | `0`                | Clockwise rotation in degrees                       |
 | `flat`         | `false`            | Rotate with map plane (Google Maps; MapKit approximates via view transform) |
 | `opacity`      | `1`                | Marker opacity from 0 to 1                          |
+| `markerColor`  | —                  | Color applied to the default marker                 |
+| `zIndex`       | —                  | Drawing order relative to other map overlays        |
 
 Platform notes:
 

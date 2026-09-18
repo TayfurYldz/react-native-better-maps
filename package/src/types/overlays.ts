@@ -106,6 +106,12 @@ export interface MarkerProps {
   /** Custom marker image. */
   image?: MarkerImageSource;
 
+  /** Color applied to the default marker when no custom image is set. */
+  markerColor?: string;
+
+  /** Drawing order relative to other map overlays. */
+  zIndex?: number;
+
   /** Anchor point on the image relative to the coordinate (default bottom-center). */
   anchor?: MarkerAnchor;
 
